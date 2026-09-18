@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PARCEL PILOT — Courier Management &amp; Services</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6fa;
+    color: #1e2433;
+    min-height: 100vh;
+  }
+
+  /* ---------- HEADER ---------- */
+  header {
+    background: #14213d;
+    color: #fff;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .brand { display: flex; align-items: center; gap: 14px; }
+
+  .brand-name { font-size: 1.35rem; font-weight: 800; letter-spacing: 1px; }
+  .brand-tag { font-size: 0.72rem; color: #fca311; letter-spacing: 2px; text-transform: uppercase; }
+
+  .live-badge {
+    background: #1f9d55;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #fff;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ---------- STATS ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 10px rgba(20,33,61,0.07);
+    border-left: 5px solid #fca311;
+  }
+  .stat-card h3 { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-card p { font-size: 1.7rem; font-weight: 800; margin-top: 6px; }
+  .stat-card span { font-size: 0.78rem; color: #1f9d55; }
+
+  /* ---------- TRACKER LAYOUT ---------- */
+  .tracker {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+  }
+
+  .panel {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(20,33,61,0.07);
+    overflow: hidden;
+  }
+  .panel-head {
+    padding: 15px 18px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #eceff5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-head small { color: #6b7280; font-weight: 500; }
+
+  .order {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f0f2f7;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .order:hover { background: #f8fafc; }
+  .order.selected { background: #fff7e8; border-left: 4px solid #fca311; padding-left: 14px; }
+  .order-top { display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; }
+  .order-sub { font-size: 0.78rem; color: #6b7280; margin-top: 4px; }
+
+  .pill { font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+  .in-transit { background: #e0ecff; color: #1d4ed8; }
+  .out-for    { background: #fff1d6; color: #b45309; }
+  .delivered  { background: #dcf5e6; color: #15803d; }
+
+  /* ---------- MAP ---------- */
+  .map-box {
+    height: 260px;
+    background:
+      linear-gradient(rgba(20,33,61,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,33,61,0.05) 1px, transparent 1px);
+    background-size: 34px 34px;
+    position: relative;
+    overflow: hidden;
+  }
+  .route-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map-pin { position: absolute; transform: translate(-50%, -100%); font-size: 0.7rem; font-weight: 700; }
+  .map-pin .dot { display: block; margin: 2px auto 0; width: 10px; height: 10px; border-radius: 50%; }
+  .truck {
+    position: absolute; font-size: 1.5rem;
+    transform: translate(-50%, -50%);
+    transition: left 2.5s ease, top 2.5s ease;
+  }
+
+  .order-detail { padding: 18px; }
+  .order-detail h2 { font-size: 1.1rem; }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .detail-item { background: #f8fafc; border-radius: 10px; padding: 10px 12px; }
+  .detail-item small { color: #6b7280; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .detail-item p { font-weight: 600; font-size: 0.9rem; margin-top: 3px; }
+
+  .progress-wrap { background: #eceff5; border-radius: 999px; height: 10px; margin: 12px 0 4px; }
+  .progress-bar {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #fca311, #1f9d55);
+    transition: width 1.2s ease;
+  }
+  .eta { font-size: 0.8rem; color: #6b7280; }
+
+  /* ---------- TIMELINE ---------- */
+  .timeline { padding: 18px; list-style: none; }
+  .timeline li { position: relative; padding: 0 0 20px 30px; font-size: 0.86rem; }
+  .timeline li::before {
+    content: "";
+    position: absolute; left: 6px; top: 4px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #cbd5e1;
+  }
+  .timeline li::after {
+    content: "";
+    position: absolute; left: 11px; top: 16px; bottom: 0;
+    width: 2px; background: #e2e8f0;
+  }
+  .timeline li:last-child::after { display: none; }
+  .timeline li.done::before { background: #1f9d55; }
+  .timeline li.current::before { background: #fca311; box-shadow: 0 0 0 4px #fde9c8; }
+  .timeline small { color: #6b7280; display: block; margin-top: 2px; }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    background: #14213d;
+    color: #d7dce6;
+    margin-top: 50px;
+  }
+  .footer-grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 44px 20px 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 30px;
+  }
+  .footer-col h4 {
+    color: #fca311;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+  .footer-col p, .footer-col li { font-size: 0.88rem; line-height: 1.7; }
+  .footer-col ul { list-style: none; }
+  .footer-col a { color: #d7dce6; text-decoration: none; cursor: pointer; }
+  .footer-col a:hover { color: #fca311; }
+  .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.12);
+    text-align: center;
+    padding: 16px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20,33,61,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 14px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 26px 28px;
+    color: #1e2433;
+  }
+  .modal h3 { color: #14213d; margin-bottom: 12px; font-size: 1.15rem; }
+  .modal p, .modal li { font-size: 0.88rem; line-height: 1.7; color: #374151; }
+  .modal ul { padding-left: 20px; margin: 8px 0; }
+  .modal-close {
+    margin-top: 18px;
+    background: #14213d;
+    color: #fff;
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .modal-close:hover { background: #fca311; color: #14213d; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 860px) {
+    .tracker { grid-template-columns: 1fr; }
+    .map-box { height: 210px; }
+    header { padding: 14px 18px; justify-content: center; text-align: center; }
+  }
+  @media (max-width: 480px) {
+    .brand-name { font-size: 1.1rem; }
+    .stat-card p { font-size: 1.4rem; }
+    .modal { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <!-- LOGO: parcel + pilot wings -->
+    <svg width="46" height="46" viewBox="0 0 64 64" aria-label="Parcel Pilot logo">
+      <rect x="20" y="24" width="24" height="24" rx="3" fill="#fca311"/>
+      <path d="M20 30 L32 38 L44 30" stroke="#14213d" stroke-width="2.5" fill="none"/>
+      <line x1="32" y1="38" x2="32" y2="48" stroke="#14213d" stroke-width="2.5"/>
+      <path d="M18 22 L4 14 L18 16 Z" fill="#ffffff"/>
+      <path d="M46 22 L60 14 L46 16 Z" fill="#ffffff"/>
+      <circle cx="32" cy="14" r="4" fill="#1f9d55"/>
+    </svg>
+    <div>
+      <div class="brand-name">PARCEL PILOT</div>
+      <div class="brand-tag">Courier Management &amp; Services</div>
+    </div>
+  </div>
+  <div class="live-badge"><span class="live-dot"></span> LIVE TRACKING</div>
+</header>
+
+<main>
+  <!-- STATS -->
+  <section class="stats">
+    <div class="stat-card"><h3>Active Orders</h3><p id="stat-active">128</p><span>▲ 12 today</span></div>
+    <div class="stat-card"><h3>In Transit</h3><p id="stat-transit">64</p><span>on schedule</span></div>
+    <div class="stat-card"><h3>Delivered Today</h3><p id="stat-delivered">52</p><span>▲ 8% vs yesterday</span></div>
+    <div class="stat-card"><h3>Avg. Delivery Time</h3><p>2.4 days</p><span>▼ 0.3 days faster</span></div>
+  </section>
+
+  <div class="tracker">
+    <!-- ORDER LIST -->
+    <section class="panel">
+      <div class="panel-head">Orders <small>click to track</small></div>
+      <div id="order-list"></div>
+    </section>
+
+    <div>
+      <!-- MAP -->
+      <section class="panel">
+        <div class="panel-head">Live Map <small id="last-updated">updated just now</small></div>
+        <div class="map-box">
+          <svg class="route-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M8,78 C30,70 35,40 55,42 S80,30 92,18"
+                  stroke="#fca311" stroke-width="1.4" stroke-dasharray="3 2.4" fill="none"/>
+          </svg>
+          <div class="map-pin" style="left:8%; top:78%;">Origin<span class="dot" style="background:#14213d;"></span></div>
+          <div class="map-pin" style="left:92%; top:18%;">Drop-off<span class="dot" style="background:#1f9d55;"></span></div>
+          <div class="truck" id="truck" style="left:30%; top:58%;">🚚</div>
+        </div>
+        <div class="order-detail">
+          <h2 id="d-id">Order #PP-1042</h2>
+          <div class="detail-grid">
+            <div class="detail-item"><small>Courier</small><p id="d-courier">Pilot Express</p></div>
+            <div class="detail-item"><small>Receiver</small><p id="d-receiver">R. Kumar</p></div>
+            <div class="detail-item"><small>Weight</small><p id="d-weight">2.3 kg</p></div>
+            <div class="detail-item"><small>Speed</small><p id="d-speed">42 km/h</p></div>
+          </div>
+          <div class="progress-wrap"><div class="progress-bar" id="d-progress" style="width:55%"></div></div>
+          <p class="eta" id="d-eta">Estimated arrival: Tomorrow, 4:30 PM</p>
+        </div>
+      </section>
+
+      <!-- TIMELINE -->
+      <section class="panel" style="margin-top:20px;">
+        <div class="panel-head">Shipment History</div>
+        <ul class="timeline" id="timeline">
+          <li class="done">Order placed <small>Aug 24, 10:12 AM — Chennai Hub</small></li>
+          <li class="done">Picked up by courier <small>Aug 24, 6:40 PM</small></li>
+          <li class="done">Arrived at regional facility <small>Aug 25, 9:05 AM</small></li>
+          <li class="current">In transit <small>Last scan: Bengaluru Junction — 12 min ago</small></li>
+          <li>Out for delivery</li>
+          <li>Delivered</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="footer-brand">
+        <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="20" y="24" width="24" height="24" rx="3" fill="#fca311"/>
+          <path d="M20 30 L32 38 L44 30" stroke="#14213d" stroke-width="2.5" fill="none"/>
+          <line x1="32" y1="38" x2="32" y2="48" stroke="#14213d" stroke-width="2.5"/>
+          <path d="M18 22 L4 14 L18 16 Z" fill="#ffffff"/>
+          <path d="M46 22 L60 14 L46 16 Z" fill="#ffffff"/>
+          <circle cx="32" cy="14" r="4" fill="#1f9d55"/>
+        </svg>
+        <strong style="color:#fff;">PARCEL PILOT</strong>
+      </div>
+      <p>Courier management &amp; services — piloting every parcel safely from doorstep to destination.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>About Us</h4>
+      <p>
+        Parcel Pilot was founded by <strong style="color:#fff;">Aloyshia</strong> and
+        <strong style="color:#fff;">Indhupriya</strong>, two friends who saw how confusing and
+        stressful parcel delivery could be for small businesses and everyday customers.
+        Starting with a single bike and a spreadsheet, they built a courier service focused on
+        honest tracking, fair pricing, and on-time delivery — with the goal of making the courier
+        space simpler and more reliable for everyone.
+      </p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Contact Us</h4>
+      <ul>
+        <li>📞 <a href="tel:6381343716">+91 6381343716 </a></li>
+        <li>✉️ <a href="mailto:indhupriya54321@gmail.com">indhupriya54321@gmail.com</a></li>
+        <li>📍 7th, Wings Avenue, Tiruvannamalai, Tamil Nadu</li>
+        <li>🕘 Mon–Sat, 9 AM – 7 PM</li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a onclick="openModal('terms')">Terms &amp; Conditions</a></li>
+        <li><a onclick="openModal('refund')">Refund &amp; Returns</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2026 Parcel Pilot — Courier Management &amp; Services. All rights reserved.</div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <div id="modal-body"></div>
+    <button class="modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+  /* ---------------- ORDERS ---------------- */
+  const orders = [
+    { id: "PP-1042", receiver: "R. Kumar",    status: "in-transit", label: "In Transit",
+      courier: "Pilot Express", weight: "2.3 kg", progress: 55,
+      eta: "Tomorrow, 4:30 PM", truck: [30, 58] },
+    { id: "PP-1043", receiver: "S. Meena",    status: "out-for",    label: "Out for Delivery",
+      courier: "Pilot Rapid",   weight: "0.8 kg", progress: 88,
+      eta: "Today, by 7:00 PM", truck: [80, 28] },
+    { id: "PP-1044", receiver: "A. Joseph",   status: "delivered",  label: "Delivered",
+      courier: "Pilot Express", weight: "5.1 kg", progress: 100,
+      eta: "Delivered Aug 26, 1:15 PM", truck: [92, 18] },
+    { id: "PP-1045", receiver: "D. Priya",    status: "in-transit", label: "In Transit",
+      courier: "Pilot Cargo",   weight: "11 kg",  progress: 30,
+      eta: "Aug 30, 11:00 AM", truck: [18, 70] },
+    { id: "PP-1046", receiver: "M. Faizal",   status: "out-for",    label: "Out for Delivery",
+      courier: "Pilot Rapid",   weight: "1.6 kg", progress: 82,
+      eta: "Today, by 6:15 PM", truck: [72, 34] },
+  ];
+
+  const list = document.getElementById("order-list");
+
+  orders.forEach((o, i) => {
+    const div = document.createElement("div");
+    div.className = "order" + (i === 0 ? " selected" : "");
+    div.innerHTML = `
+      <div class="order-top"><span>#${o.id}</span><span class="pill ${o.status}">${o.label}</span></div>
+      <div class="order-sub">${o.receiver} • ${o.courier}</div>`;
+    div.onclick = () => selectOrder(o, div);
+    list.appendChild(div);
+  });
+
+  function selectOrder(o, el) {
+    document.querySelectorAll(".order").forEach(x => x.classList.remove("selected"));
+    el.classList.add("selected");
+    document.getElementById("d-id").textContent = "Order #" + o.id;
+    document.getElementById("d-courier").textContent = o.courier;
+    document.getElementById("d-receiver").textContent = o.receiver;
+    document.getElementById("d-weight").textContent = o.weight;
+    document.getElementById("d-progress").style.width = o.progress + "%";
+    document.getElementById("d-eta").textContent = "Estimated arrival: " + o.eta;
+    const truck = document.getElementById("truck");
+    truck.style.left = o.truck[0] + "%";
+    truck.style.top = o.truck[1] + "%";
+  }
+
+  /* ---------------- SIMULATED LIVE UPDATES ---------------- */
+  let seconds = 0;
+  setInterval(() => {
+    seconds += 3;
+    document.getElementById("last-updated").textContent =
+      seconds < 60 ? `updated ${seconds}s ago` : `updated ${Math.floor(seconds/60)}m ago`;
+
+    const speed = 35 + Math.floor(Math.random() * 25);
+    document.getElementById("d-speed").textContent = speed + " km/h";
+
+    // gently wiggle the truck for a "live" feel
+    const truck = document.getElementById("truck");
+    const l = parseFloat(truck.style.left), t = parseFloat(truck.style.top);
+    truck.style.left = Math.min(92, Math.max(8, l + (Math.random() * 4 - 2))) + "%";
+    truck.style.top = Math.min(78, Math.max(18, t + (Math.random() * 4 - 2))) + "%";
+
+    // occasionally tick the counters up
+    if (Math.random() < 0.2) {
+      const d = document.getElementById("stat-delivered");
+      d.textContent = parseInt(d.textContent) + 1;
+    }
+  }, 3000);
+
+  /* ---------------- MODAL (Terms / Refund) ---------------- */
+  const content = {
+    terms: `
+      <h3>Terms &amp; Conditions</h3>
+      <p>By using Parcel Pilot's courier management &amp; services, you agree to the following:</p>
+      <ul>
+        <li>Parcels must be accurately declared (contents, weight, value) at booking.</li>
+        <li>Prohibited items — including hazardous materials, cash, and illegal goods — will not be carried.</li>
+        <li>Estimated delivery times are indicative and may vary due to weather, traffic, or customs.</li>
+        <li>Live tracking data is provided as a courtesy and refreshed periodically.</li>
+        <li>Liability for loss or damage is limited to the declared value, up to ₹10,000 per shipment unless insurance is purchased.</li>
+        <li>Parcel Pilot may update these terms; continued use constitutes acceptance.</li>
+      </ul>`,
+    refund: `
+      <h3>Refund &amp; Returns</h3>
+      <p>We want every shipment to arrive right. If something goes wrong:</p>
+      <ul>
+        <li><strong>Cancellations:</strong> Bookings cancelled before pickup receive a full refund within 5–7 business days.</li>
+        <li><strong>Damaged parcels:</strong> Report within 48 hours of delivery with photos; approved claims are refunded or compensated up to the declared value.</li>
+        <li><strong>Lost parcels:</strong> If a parcel is untraceable for 14 days, a full claim can be filed.</li>
+        <li><strong>Returns:</strong> Undeliverable parcels are returned to the sender; return charges may apply for incorrect addresses.</li>
+        <li>Refunds are processed to the original payment method. Email support@parcelpilot.com to start a claim.</li>
+      </ul>`
+  };
+
+  function openModal(key) {
+    document.getElementById("modal-body").innerHTML = content[key];
+    document.getElementById("modal").classList.add("open");
+  }
+  function closeModal() {
+    document.getElementById("modal").classList.remove("open");
+  }
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+</script>
+
+</body>
+</html>
